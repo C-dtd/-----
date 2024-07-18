@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+        }
+        #card {
+            /* background-color: blue; */
+            transform: perspective(500px);
+            width: 750px;
+            aspect-ratio: 1.5;
+            position: relative;
+            perspective: 500px;
+            margin-left: 200px;
+            margin-top: 100px;
+        }
+        .layer {
+            transition: 0.4s;
+            width: 100%;
+            aspect-ratio: 1.5;
+            object-fit: cover;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div id="card">
+        <img src="./img/하늘.png" class="layer d-1">
+        <img src="./img/잔디.png" class="layer d-1">
+        <img src="./img/나무층.png" class="layer d-1">
+        <img src="./img/잔디.png" class="layer d-4">
+        <img src="./img/나무층.png" class="layer d-4">
+        <img src="./img/잔디.png" class="layer d-7">
+        <img src="./img/검안꽂힌바위.png" class="layer d-7">
+        <img src="./img/검꽂힌바위.png" class="layer d-10">
+        <img src="./img/검안꽂힌바위.png" class="layer d-13">
+        
+        <!-- <img src="./img/나무.png" class="layer"> -->
+    </div>
+</body>
+<script>
+    const card = document.querySelector('#card');
+    card.addEventListener('mousemove', (e) => {
+        const card_width = card.getBoundingClientRect().width;
+        const card_height = card.getBoundingClientRect().height;
+        let ofy = (e.offsetY -card_height/2)/(card_height/2);
+        let ofx = (e.offsetX -card_width/2)/(card_width/2);
+        const layers = document.querySelectorAll('.layer');
+        layers.forEach((e) => {
+            let depth = e.classList[1].split('-')[1];
+            e.style.transform = `rotateX(${-40*ofy}deg) rotateY(${40*ofx}deg) translate(${depth*10*ofx}px, ${depth*10*ofy}px)`;
+        });
+        // background.style.transform = `rotateX(${-40*ofy}deg) rotateY(${40*ofx}deg)`;
+        // icon.style.transform = `rotateX(${-40*ofy}deg) rotateY(${40*ofx}deg) translate(${10*ofx}px, ${10*ofy}px)`;
+        // character.style.transform = `rotateX(${-40*ofy}deg) rotateY(${40*ofx}deg) translate(${10*ofx}px, ${10*ofy}px)`;
+    });
+    // card.addEventListener('mouseleave', () => {
+    //     background.style.transform = '';
+    //     icon.style.transform = '';
+    //     character.style.transform = '';
+    // })
+</script>
+</html>

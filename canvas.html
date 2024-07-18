@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 200px;
+            height: 200px;
+        }
+        #view {
+            width: 800px;
+            height: 800px;
+            transform: perspective(500px);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="view" width="1000" height="1000"></canvas>
+    <canvas id="map" width="200" height="200"></canvas>
+    <script>
+        const map = document.querySelector('#map');
+        const mctx = map.getContext('2d');
+        
+        const viewCanvas = document.querySelector('#view');
+        const vctx = viewCanvas.getContext('2d');
+        const vw = viewCanvas.width;
+        const vh = viewCanvas.height;
+
+        vctx.fillStyle = '#888888';
+        cdir = Math.PI/2;
+
+        const cos45 = Math.cos(Math.PI/2);
+
+        class block {
+            constructor(x1, y1, z1, x2, y2, z2) {
+                this.x1 = x1;
+                this.x2 = x2;
+                this.y1 = y1;
+                this.y2 = y2;
+                this.z1 = z1;
+                this.z2 = z2;
+            }
+            points() {
+                return [
+                    [this.x1, this.y1, this.x1, this.y2],
+                    [this.x1, this.y2, this.x2, this.y2],
+                    [this.x2, this.y2, this.x2, this.y1],
+                    [this.x2, this.y1, this.x1, this.y1]
+                ];
+            }
+        }
+        class player {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+        }
+
+        blocks = [];
+        blocks.push(new block(0, 0, -100, 40, 40, 0));
+        blocks.push(new block(40, 0, -80, 80, 40, 0));
+        blocks.push(new block(80, 0, -20, 120, 40, 0));
+        blocks.push(new block(120, 0, -40, 160, 40, 0));
+        blocks.push(new block(160, 0, -20, 200, 40, 0));
+        pl = new player(100, 60, -10);
+
+        // setInterval(screenUpdate, 50);
+        screenUpdate();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key == 'q') {
+                cdir += 0.05;
+            }
+            if (e.key == 'e') {
+                cdir -= 0.05;
+            }
+            if (e.key == 'w') {
+                pl.y -= 0.5;
+            }
+            if (e.key == 's') {
+                pl.y += 0.5;
+            }
+            if (e.key == 'a') {
+                pl.x -= 0.5;
+            }
+            if (e.key == 'd') {
+                pl.x += 0.5;
+            }
+            if (e.key == 'Shift') {
+                pl.z += 0.5;
+            }
+            if (e.key == ' ') {
+                pl.z -= 0.5;
+            }
+            screenUpdate();
+        })
+        function screenUpdate() {
+            mctx.clearRect(0, 0, map.width, map.height);
+            vctx.clearRect(0, 0, vw, vh);
+            
+            blocks.forEach(e => {
+                mctx.strokeRect(e.x1, e.y1, e.x2-e.x1, e.y2-e.y1);
+                let isView = false;
+                e.points().forEach(e => {
+                    let dir = pointdir(pl.x, pl.y, e[0], e[1]);
+                    let dif = dirdiff(cdir, dir);
+                    if (Math.abs(dif)<Math.PI/4) {
+                        isView = true;
+                    }
+                })
+                // console.log(isView);
+                if (isView) {
+                    e.points().forEach(p => {
+                        let dir = pointdir(pl.x, pl.y, p[0], p[1]);
+                        let dif = dirdiff(cdir, dir);
+                        dif = clamp(dif, -Math.PI/2, Math.PI/2);
+                        let ndir = pointdir(pl.x, pl.y, p[2], p[3]);
+                        let ndif = dirdiff(cdir, ndir);
+                        ndif = clamp(ndif, -Math.PI/2, Math.PI/2);
+                        
+                        // if (Math.abs(dif) == Math.PI/2 && Math.abs(ndif) == Math.PI/2) {
+                        //     return;
+                        // }                        
+
+                        let x = 0;
+                        let y = 0;
+                        vctx.beginPath();
+                        x = Math.tan(dif);
+                        y = (e.z1 -pl.z) /(Math.cos(dif) *pointlen(pl.x, pl.y, p[0], p[1]));
+                        // if (Math.abs(x) > 2 || Math.abs(y) > 2) {
+                        //     absmx = Math.max(Math.abs(x), Math.abs(y));
+                        //     x = x/absmx*2;
+                        //     y = y/absmx*2; 
+                        // }
+                        vctx.moveTo(500 -x*500, 500 +y*500);
+                        x = Math.tan(dif);
+                        y = (e.z2 -pl.z) /(Math.cos(dif) *pointlen(pl.x, pl.y, p[0], p[1]));
+                        vctx.lineTo(500 -x*500, 500 +y*500);
+
+                        vctx.moveTo(500 -x*500, 500 +y*500);
+                        x = Math.tan(ndif);
+                        y = (e.z2 -pl.z) /(Math.cos(ndif) *pointlen(pl.x, pl.y, p[2], p[3]));
+                        vctx.lineTo(500 -x*500, 500 +y*500);
+
+                        vctx.moveTo(500 -x*500, 500 +y*500);
+                        x = Math.tan(ndif);
+                        y = (e.z1 -pl.z) /(Math.cos(ndif) *pointlen(pl.x, pl.y, p[2], p[3]));
+                        vctx.lineTo(500 -x*500, 500 +y*500);
+
+                        vctx.moveTo(500 -x*500, 500 +y*500);
+                        x = Math.tan(dif);
+                        y = (e.z1 -pl.z) /(Math.cos(dif) *pointlen(pl.x, pl.y, p[0], p[1]));
+                        vctx.lineTo(500 -x*500, 500 +y*500);
+
+                        vctx.closePath();
+                        vctx.stroke();
+                    })
+                }
+            });
+
+            mctx.beginPath();
+            // mctx.arc(pl.x, pl.y, 10, cdir, cdir-Math.PI/4, true);
+            // mctx.fill();
+            mctx.moveTo(pl.x, pl.y);
+            mctx.lineTo(pl.x +Math.cos(cdir -Math.PI/4)*200, pl.y -Math.sin(cdir -Math.PI/4)*200);
+            mctx.lineTo(pl.x +Math.cos(cdir +Math.PI/4)*200, pl.y -Math.sin(cdir +Math.PI/4)*200);
+            mctx.closePath();
+            mctx.stroke();
+        }
+        
+        function pointlen(x1, y1, x2, y2) {
+            return ((x2-x1)**2 +(y2-y1)**2)**0.5;
+        }
+        function pointdir(x1, y1, x2, y2) {
+            return Math.atan2(y1 -y2, x2 -x1);
+        }
+        function dirdiff(d1, d2) {
+            diff = d2%(Math.PI*2) -d1%(Math.PI*2);
+            return diff < -Math.PI ? diff+Math.PI*2 : diff;
+            // return diff;
+        }
+        function clamp(x, mn, mx) {
+            return Math.min(Math.max(x, mn), mx);
+        }
+    </script>
+</body>
+</html>
