@@ -10,162 +10,217 @@
             padding: 0;
         }
         #screen {
-            width: 1000px;
-            height: 1000px;
+            width: 800px;
+            height: 800px;
             position: relative;
             perspective: 500px;
             overflow: hidden;
+            /* transform-style: preserve-3d; */
+            display: flex;
+            justify-content: center;
         }
         .block {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 200px;
+            height: 200px;
             transform-style: preserve-3d;
-            left: calc(50% - 50px);
-            top: calc(50% - 50px);
+            /* left: calc(50% - 300px); */
+            bottom: 50%;
+            /* animation: rotation 5s infinite; */
         }
-        .wall {
-            background-color: rgba(222, 184, 135, 0.3);
+        .wall, .floor {
+            background-color: antiquewhite;
             position: absolute;
             width: 100%;
             height: 100%;
             outline: 1px black solid;
             backface-visibility: hidden;
         }
+        #map {
+            position: absolute;
+            top: 0;
+        }
+        #aim {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: calc(50% - 5px);
+            left: calc(50% - 5px);
+            background-color: rgba(211, 211, 211, 0.7);
+        }
     </style>
 </head>
 <body>
     <div id="screen">
+        <div id="aim"></div>
     </div>
     <canvas id="map" width="200" height="200"></canvas>
-</body>
-
-<script>
-    const map = document.querySelector('#map');
-    const mctx = map.getContext('2d');
-    const screen = document.querySelector('#screen');
-
-    class block {
-        constructor(x1, y1, z1, x2, y2, z2) {
-            this.x1 = x1;
-            this.x2 = x2;
-            this.y1 = y1;
-            this.y2 = y2;
-            this.z1 = z1;
-            this.z2 = z2;
-        }
-        points() {
-            return [
-                [this.x1, this.y1, this.x1, this.y2],
-                [this.x1, this.y2, this.x2, this.y2],
-                [this.x2, this.y2, this.x2, this.y1],
-                [this.x2, this.y1, this.x1, this.y1]
-            ];
-        }
-        block;
-    }
-    class player {
-        constructor(x, y, z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
-
-    blocks = [];
-    // blocks.push(new block(0, 0, -100, 40, 40, 0));
-    // blocks.push(new block(40, 0, -80, 80, 40, 0));
-    blocks.push(new block(80, 0, -20, 120, 40, 0));
-    // blocks.push(new block(120, 0, -40, 160, 40, 0));
-    // blocks.push(new block(160, 0, -20, 200, 40, 0));
-    // blocks.push(new block(0, 40, -100, 40, 80, 0));
-    // blocks.push(new block(0, 80, -100, 40, 120, 0));
-    pl = new player(100, 140, -10);
-    cdir = Math.PI/2;
-
-    setInterval(mapUpdate, 50);
-    setInterval(screenUpdate, 50);
-
-    function mapUpdate() {
-        mctx.clearRect(0, 0, map.width, map.height);
-        blocks.forEach(e => {
-            mctx.strokeRect(e.x1, e.y1, e.x2-e.x1, e.y2-e.y1);
-        });
-        mctx.beginPath();
-        mctx.moveTo(pl.x, pl.y);
-        mctx.lineTo(pl.x +Math.cos(cdir -Math.PI/4)*200, pl.y -Math.sin(cdir -Math.PI/4)*200);
-        mctx.moveTo(pl.x, pl.y);
-        mctx.lineTo(pl.x +Math.cos(cdir)*100, pl.y -Math.sin(cdir)*100);
-        mctx.moveTo(pl.x, pl.y);
-        mctx.lineTo(pl.x +Math.cos(cdir +Math.PI/4)*200, pl.y -Math.sin(cdir +Math.PI/4)*200);
-        mctx.closePath();
-        mctx.stroke();
-    }
-
-    blocks.forEach((e) => {
-        let block = document.createElement('div');
-        block.setAttribute('class', 'block');
-        block.innerHTML = 
-        `<div class="wall"></div>
-        <div class="wall"></div>
-        <div class="wall"></div>
-        <div class="wall"></div>`;
-        screen.appendChild(block);
-        e.block = block;
-    });
-
-    // screenUpdate()
-    function screenUpdate() {
-        blocks.forEach((e) => {
-            const walls = e.block.querySelectorAll('.wall');
-            for (let i=0; i<4; i++) {
-                const wall = walls[i];
-                const p = e.points()[i];
-                wall.style.transform = 
-                `
-                rotateY(${[0, 90, 180, 270][i]}deg)
-                translate3d(0px, 0px, 50px)
-                `;
+    <script>
+        const map = document.querySelector('#map');
+        const mctx = map.getContext('2d');
+        const screen = document.querySelector('#screen');
+        mctx.fillStyle = '#ffffff';
+        class block {
+            constructor(x1, y1, z1, x2, y2, z2) {
+                this.x1 = x1;
+                this.x2 = x2;
+                this.y1 = y1;
+                this.y2 = y2;
+                this.z1 = z1;
+                this.z2 = z2;
+                this.w = Math.abs(x2-x1);
+                this.d = Math.abs(y2-y1);
+                this.h = Math.abs(z2-z1);
             }
-        });
-    }
+            points() {
+                return [
+                    [this.x1, this.y1, this.x1, this.y2],
+                    [this.x1, this.y2, this.x2, this.y2],
+                    [this.x2, this.y2, this.x2, this.y1],
+                    [this.x2, this.y1, this.x1, this.y1]
+                ];
+            }
+            block;
+        }
+        class player {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+        }
 
-    // document.addEventListener('keydown', (e) => {
-    //     if (e.key == 'q') {
-    //         cdir += 0.05;
-    //     }
-    //     if (e.key == 'e') {
-    //         cdir -= 0.05;
-    //     }
-    //     if (e.key == 'w') {
-    //         pl.y -= 0.5;
-    //     }
-    //     if (e.key == 's') {
-    //         pl.y += 0.5;
-    //     }
-    //     if (e.key == 'a') {
-    //         pl.x -= 0.5;
-    //     }
-    //     if (e.key == 'd') {
-    //         pl.x += 0.5;
-    //     }
-    //     if (e.key == 'Shift') {
-    //         pl.z += 0.5;
-    //     }
-    //     if (e.key == ' ') {
-    //         pl.z -= 0.5;
-    //     }
-    // })
-    
-    function pointlen(x1, y1, x2, y2) {
-        return ((x2-x1)**2 +(y2-y1)**2)**0.5;
-    }
-    function pointdir(x1, y1, x2, y2) {
-        return Math.atan2(y1 -y2, x2 -x1);
-    }
-    function dirdiff(d1, d2) {
-        diff = d2%(Math.PI*2) -d1%(Math.PI*2);
-        return diff < -Math.PI ? diff+Math.PI*2 : diff;
-    }
-</script>
+        blocks = [];
+        blocks.push(new block(0, 0, 100, 40, 40, 0));
+        blocks.push(new block(40, 0, 80, 80, 40, 0));
+        blocks.push(new block(80, 0, 60, 120, 40, 0));
+        blocks.push(new block(120, 0, 40, 160, 40, 0));
+        blocks.push(new block(160, 0, 0, 200, 40, -40));
+        blocks.push(new block(0, 40, 20, 40, 80, 0));
+        blocks.push(new block(0, 80, 40, 40, 120, 0));
+        // blocks.push(new block(40, 0, 80, 160, 40, 0));
+
+        pl = new player(100, 140, 20);
+        cdir = Math.PI/2;
+
+        blocks.forEach((e) => {
+            let block = document.createElement('div');
+            block.setAttribute('class', 'block');
+            block.style.width = `${e.w*5}px`;
+            block.style.height = `${e.h*5}px`;
+            block.innerHTML = 
+            `<div class="wall" style="width: ${e.w*5}px; height: ${e.h*5}px;"></div>
+            <div class="wall" style="width: ${e.d*5}px; height: ${e.h*5}px;"></div>
+            <div class="wall" style="width: ${e.w*5}px; height: ${e.h*5}px;"></div>
+            <div class="wall" style="width: ${e.d*5}px; height: ${e.h*5}px;"></div>
+            <div class="floor" style="width: ${e.w*5}px; height: ${e.d*5}px;"></div>
+            <div class="floor" style="width: ${e.w*5}px; height: ${e.d*5}px;"></div>`;
+            screen.appendChild(block);
+            e.block = block;
+        });
+
+        setInterval(mapUpdate, 50);
+        // setInterval(screenUpdate, 50);
+        screenUpdate();
+
+        function mapUpdate() {
+            // mctx.clearRect(0, 0, map.width, map.height);
+            mctx.fillRect(0, 0, map.width, map.height);
+
+            blocks.forEach(e => {
+                mctx.strokeRect(e.x1, e.y1, e.w, e.d);
+            });
+            mctx.beginPath();
+            mctx.moveTo(pl.x, pl.y);
+            mctx.lineTo(pl.x +Math.cos(cdir -Math.PI/4)*200, pl.y -Math.sin(cdir -Math.PI/4)*200);
+            mctx.moveTo(pl.x, pl.y);
+            mctx.lineTo(pl.x +Math.cos(cdir)*100, pl.y -Math.sin(cdir)*100);
+            mctx.moveTo(pl.x, pl.y);
+            mctx.lineTo(pl.x +Math.cos(cdir +Math.PI/4)*200, pl.y -Math.sin(cdir +Math.PI/4)*200);
+            mctx.closePath();
+            mctx.stroke();
+        }
+
+        function screenUpdate() {
+            const vp = [pl.x +Math.cos(cdir)*100, pl.y -Math.sin(cdir)*100];
+            blocks.forEach((e) => {
+                const walls = e.block.querySelectorAll('.wall');
+                const floors = e.block.querySelectorAll('.floor');
+                const p_center = [(e.x1 +e.x2)/2, (e.y1 +e.y2)/2];
+
+                const v_len = pointlen(vp[0], vp[1], p_center[0], p_center[1]);
+                const v_dir = pointdir(vp[0], vp[1], p_center[0], p_center[1]);
+                const rel_dir = dirdiff(cdir,v_dir);
+
+                e.block.style.zIndex = -pointlen(pl.x, pl.y, p_center[0], p_center[1]).toFixed(2)*100;
+                // e.block.innerText = pointlen(pl.x, pl.y, p_center[0], p_center[1]);
+                e.block.style.transform = 
+                `
+                translate3d(${-v_len*Math.sin(rel_dir)*5}px, ${(pl.z-e.z2)*5}px, ${-v_len*Math.cos(rel_dir)*5}px)
+                `;
+
+                for (let i=0; i<4; i++) {
+                    const wall = walls[i];
+                    const p = e.points()[i];
+                    const dir = dirdiff(cdir, pointdir(p[0], p[1], p[2], p[3]));
+                    wall.style.left = `calc(50% - ${wall.style.width.split('px')[0]/2}px)`;
+                    // wall.style.top = `calc(50% - ${wall.style.height.split('px')[0]/2}px)`;
+                    // wall.style.top = `${wall.style.height.split('px')[0]/2}px`;
+                    // wall.style.bottom = '100%';
+                    wall.style.transform = 
+                    `
+                    rotateY(${dir*180/Math.PI}deg)
+                    translate3d(0, 0, ${[e.d, e.w, e.d, e.w][i]*2.5}px)
+                    `;
+                }
+                for (let i=0; i<2; i++) {
+                    const floor = floors[i];
+                    const dir = dirdiff(cdir, 1.7);
+                    floor.style.top = `calc(50% - ${floor.style.height.split('px')[0]/2}px)`;
+                    floor.style.transform = 
+                    `
+                    rotateX(${[90,-90][i]}deg)
+                    rotateZ(${[-1, 1][i]*dirdiff(cdir, Math.PI/2)*180/Math.PI}deg)
+                    translate3d(0, 0, ${e.h*2.5}px)
+                    `;
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key == 'w') {
+                pl.x += Math.cos(cdir)*2;
+                pl.y -= Math.sin(cdir)*2;
+            }
+            if (e.key == 's') {
+                pl.x -= Math.cos(cdir)*2;
+                pl.y += Math.sin(cdir)*2;
+            }
+            if (e.key == 'a') {
+                cdir += 0.05;
+            }
+            if (e.key == 'd') {
+                cdir -= 0.05;
+            }
+            if (e.key == 'Shift') {
+                pl.z -= 2;
+            }
+            if (e.key == ' ') {
+                pl.z += 2;
+            }
+            screenUpdate();
+        })
+        
+        function pointlen(x1, y1, x2, y2) {
+            return ((x2-x1)**2 +(y2-y1)**2)**0.5;
+        }
+        function pointdir(x1, y1, x2, y2) {
+            return Math.atan2(y1 -y2, x2 -x1);
+        }
+        function dirdiff(d1, d2) {
+            diff = d2%(Math.PI*2) -d1%(Math.PI*2);
+            return diff < -Math.PI ? diff+Math.PI*2 : diff;
+        }
+    </script>
+</body>
 </html>
