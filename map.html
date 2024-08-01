@@ -157,8 +157,6 @@
                 const rel_dir = dirdiff(cdir,v_dir);
 
                 e.block.style.zIndex = -(pointlen3d(pl.x, pl.y, pl.z, p_center[0], p_center[1], (e.z1+e.z2)/2)*100).toFixed(0);
-                console.log();
-                // e.block.innerText = pointlen(pl.x, pl.y, p_center[0], p_center[1]);
                 e.block.style.transform = 
                 `
                 translate3d(${-v_len*Math.sin(rel_dir)*5}px, ${(pl.z-e.z2)*5}px, ${-v_len*Math.cos(rel_dir)*5}px)
@@ -169,9 +167,6 @@
                     const p = e.points()[i];
                     const dir = dirdiff(cdir, pointdir(p[0], p[1], p[2], p[3]));
                     wall.style.left = `calc(50% - ${wall.style.width.split('px')[0]/2}px)`;
-                    // wall.style.top = `calc(50% - ${wall.style.height.split('px')[0]/2}px)`;
-                    // wall.style.top = `${wall.style.height.split('px')[0]/2}px`;
-                    // wall.style.bottom = '100%';
                     wall.style.transform = 
                     `
                     rotateY(${dir*180/Math.PI}deg)

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body { 
+            margin: 0;
+            padding: 0;
+        }
+        .body {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: bisque;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="body"></div>
+    <div class="body"></div>
+    <div class="body"></div>
+    <div class="body"></div>
+    <div class="body"></div>
+    <script>
+        let t = false;
+        class body {
+            constructor(x, y, body) {
+                this.x = x;
+                this.y = y;
+                this.body = body;
+            }
+            cx;
+            cy;
+            cdir_p = 0;
+        }
+        const bodies = [];
+        let i = 0;
+        document.querySelectorAll('.body').forEach(e => {
+            bodies.push(new body(0, i*48, e));
+            i += 1;
+        });
+
+        setInterval(moveupdate, 10);
+
+        function moveupdate() {
+            for (let i=1; i<bodies.length; i++) {
+                const head = bodies[i-1];
+                const tail = bodies[i];
+                tail.cx = (head.x +tail.x)/2;
+                tail.cy = (head.y +tail.y)/2;
+                dir = pointdir(tail.x, tail.y, head.x, head.y);
+                cdir = pointdir(tail.cx, tail.cy, head.x, head.y);
+                // console.log(dirdiff(cdir, tail.cdir_p)/10);
+                // cdir = 0*Math.PI/180;
+                cdir += tail.cdir_p*0.9+dirdiff(dir, cdir)/30+dirdiff(dir, Math.PI/2)/90;
+                tail.cdir_p = tail.cdir_p*0.9+dirdiff(dir, cdir)/30+dirdiff(dir, Math.PI/2)/180;
+                // cdir += dirdiff(cdir, tail.cdir_p);
+
+                tail.x = head.x -Math.cos(cdir)*48;
+                tail.y = head.y +Math.sin(cdir)*48;
+                // tail.cdir_p = cdir;
+            }
+            
+            bodies.forEach(e => {
+                // e.body.style.left = e.x+'px';
+                // e.body.style.top = e.y+'px';
+                e.body.style.transform = `translate(calc(${e.x}px - 50%), calc(${e.y}px - 50%))`;
+            });
+        }
+        
+        document.addEventListener('mousemove', e => {
+            bodies[0].x = e.pageX;
+            bodies[0].y = e.pageY;
+        })
+
+        function pointlen(x1, y1, x2, y2) {
+            return ((x2-x1)**2 +(y2-y1)**2)**0.5;
+        }
+        function pointdir(x1, y1, x2, y2) {
+            return Math.atan2(y1 -y2, x2 -x1);
+        }
+        function dirdiff(d1, d2) {
+            diff = d2%(Math.PI*2) -d1%(Math.PI*2);
+            diff = diff > Math.PI ? diff -Math.PI*2 : diff;
+            diff = diff < -Math.PI ? diff +Math.PI*2 : diff;
+            // return diff < -Math.PI ? diff+Math.PI*2 : diff;
+            return diff;
+        }
+    </script>
+</body>
+</html>
